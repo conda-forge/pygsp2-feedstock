@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pygsp2-{{ versi>
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pygsp2-{{ version }}.tar.gz
   sha256: be9de90a12cf164732fb53e10b8ca79a28924e7cf61f9b02216b168e16d55509
 
 build:
