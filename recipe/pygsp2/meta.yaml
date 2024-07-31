@@ -1,0 +1,53 @@
+{% set name = "pygsp2" %}
+{% set version = "2.0.12" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pygsp2-{{ version }}.tar.gz
+  sha256: ff8b7c0396e73c8fad04ff1f40aea999f265abd579e5ad18a9caa1ebef907557
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.11
+    - hatchling
+    - pip
+  run:
+    - python >=3.11
+    - numpy
+    - scipy
+    - pandas
+    - networkx
+    - geopy
+    - matplotlib-base
+    - unidecode
+    - utm
+    - pyxlsb
+    - charset-normalizer
+    - requests
+    - hatchling
+
+test:
+  imports:
+    - pygsp2
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/gsp-eeg/pygsp2
+  summary: Package for EEG Graph signal Processing
+  license: BSD-3-Clause
+  license_file: LICENSE.txt
+
+extra:
+  recipe-maintainers:
+    - AddYourGitHubIdHere
