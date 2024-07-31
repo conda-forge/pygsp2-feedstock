@@ -45,7 +45,7 @@ jobs:
         PACKAGE_NAME="pygsp2"
         
         # Update the meta.yaml file with Grayskull
-        grayskull pypi $PACKAGE_NAME --version $NEW_VERSION
+        grayskull pypi $PACKAGE_NAME
 
         # Update the version in the recipe manually
         sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" recipe/meta.yaml
