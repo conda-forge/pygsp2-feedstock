@@ -38,6 +38,9 @@ jobs:
           echo "::set-output name=new_version::"
         fi
 
+    - name: Display meta.yaml before update
+      run: cat recipe/meta.yaml
+
     - name: Update meta.yaml
       if: steps.check_version.outputs.new_version != ''
       run: |
@@ -52,12 +55,16 @@ jobs:
         # Update meta.yaml for templated version
         sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" $META_FILE
         sed -i "s/sha256: .*/sha256: $HASH/" $META_FILE
-        
+
+        # Display updated meta.yaml
+        cat $META_FILE
+
         # Commit changes
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add $META_FILE
-        git commit -m "Update to version $NEW_VERSION"
+        git status  # Check status
+        git commit -m "Update to version $NEW_VERSION" || echo "No changes to commit"
 
     - name: Create Pull Request
       if: steps.check_version.outputs.new_version != ''
