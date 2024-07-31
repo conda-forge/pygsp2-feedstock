@@ -47,11 +47,13 @@ jobs:
         PACKAGE_NAME=${{ steps.check_version.outputs.package_name }}
 
         # Regenerate the entire recipe using Grayskull
-        grayskull pypi $PACKAGE_NAME --output recipe
+        grayskull pypi $PACKAGE_NAME --output recipe --mantainers lucascortesg
 
         # Commit changes
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+        mv recipe/$PACKAGE_NAME/meta.yaml recipe/meta.yaml
+        rm -rf recipe/$PACKAGE_NAME
         git add recipe/*
         git status  # Check status
         git commit -m "Update $PACKAGE_NAME to version $NEW_VERSION" || echo "No changes to commit"
