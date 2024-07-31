@@ -27,7 +27,7 @@ jobs:
       run: |
         PACKAGE_NAME="pygsp2"
         PYPI_URL="https://pypi.org/pypi/$PACKAGE_NAME/json"
-        CURRENT_VERSION=$(grep -oP '(?<=version: ).*' recipe/meta.yaml || echo '')
+        CURRENT_VERSION=$(grep -oP '(?<={% set version = ").*(?=" %})' recipe/meta.yaml || echo '')
         LATEST_VERSION=$(curl -s $PYPI_URL | jq -r .info.version)
         
         if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
@@ -44,8 +44,16 @@ jobs:
         NEW_VERSION=${{ steps.check_version.outputs.new_version }}
         PACKAGE_NAME="pygsp2"
         
-        # Update recipe using Grayskull
-        grayskull pypi $PACKAGE_NAME
+        # Update the meta.yaml file with Grayskull
+        grayskull pypi $PACKAGE_NAME --version $NEW_VERSION
+
+        # Update the version in the recipe manually
+        sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" recipe/meta.yaml
+
+        # Get new tarball URL and hash
+        URL="https://pypi.io/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$NEW_VERSION.tar.gz"
+        HASH=$(curl -sL $URL | sha256sum | awk '{print $1}')
+        sed -i "s/sha256: .*/sha256: $HASH/" recipe/meta.yaml
 
         # Commit changes
         git config user.name "github-actions[bot]"
