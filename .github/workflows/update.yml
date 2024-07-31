@@ -48,12 +48,21 @@ jobs:
         # Generate or update the recipe using Grayskull
         grayskull pypi $PACKAGE_NAME
 
-        # Commit changes
+        # Configure Git
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # Create a new branch
+        BRANCH_NAME="update-to-${{ steps.check_version.outputs.new_version }}"
+        git checkout -b $BRANCH_NAME
+
+        # Add changes and commit
         git add recipe/*
         git status  # Check status
-        git commit -m "Update $PACKAGE_NAME recipe" || echo "No changes to commit"
+        git commit -m "Update $PACKAGE_NAME recipe"
+
+        # Push the branch
+        git push origin $BRANCH_NAME
 
     - name: Create Pull Request
       if: steps.check_version.outputs.new_version != ''
