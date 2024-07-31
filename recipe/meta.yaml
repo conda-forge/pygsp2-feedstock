@@ -29,6 +29,7 @@ requirements:
     - unidecode
     - utm
     - pyxlsb
+    - hatchling
 
 test:
   imports:
