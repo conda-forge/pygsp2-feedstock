@@ -47,7 +47,7 @@ jobs:
         PACKAGE_NAME=${{ steps.check_version.outputs.package_name }}
 
         # Regenerate the entire recipe using Grayskull
-        grayskull pypi $PACKAGE_NAME --version $NEW_VERSION --output recipe
+        grayskull pypi $PACKAGE_NAME --output recipe
 
         # Commit changes
         git config user.name "github-actions[bot]"
