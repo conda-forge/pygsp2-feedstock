@@ -1,12 +1,12 @@
-name: Update Conda-Forge Package
+name: Update Conda-Forge Recipe with Grayskull
 
 on:
   schedule:
-    - cron: '0,30 * * * *'  # Runs every half hour
+    - cron: '0 * * * *'  # Runs every half hour
   workflow_dispatch:
 
 jobs:
-  update-package:
+  update-recipe:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,16 +18,16 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Install Required Packages
+    - name: Install Grayskull
       run: |
-        pip install requests pyyaml gitpython jq
+        pip install grayskull
 
     - name: Check for New Version on PyPI
       id: check_version
       run: |
         PACKAGE_NAME="pygsp2"
         PYPI_URL="https://pypi.org/pypi/$PACKAGE_NAME/json"
-        CURRENT_VERSION=$(grep -oP '(?<=version: ).*' recipe/meta.yaml)
+        CURRENT_VERSION=$(grep -oP '(?<=version: ).*' recipe/meta.yaml || echo '')
         LATEST_VERSION=$(curl -s $PYPI_URL | jq -r .info.version)
         
         if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
@@ -38,39 +38,36 @@ jobs:
           echo "::set-output name=new_version::"
         fi
 
-    - name: Display meta.yaml before update
-      run: cat recipe/meta.yaml
-
-    - name: Update meta.yaml
+    - name: Update meta.yaml using Grayskull
       if: steps.check_version.outputs.new_version != ''
       run: |
         NEW_VERSION=${{ steps.check_version.outputs.new_version }}
         PACKAGE_NAME="pygsp2"
-        META_FILE="recipe/meta.yaml"
+        GRAYSKULL_CMD="grayskull create recipe $PACKAGE_NAME --version $NEW_VERSION --feedstock"
         
-        # Get new tarball URL and hash
-        URL="https://pypi.io/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$NEW_VERSION.tar.gz"
-        HASH=$(curl -sL $URL | sha256sum | awk '{print $1}')
-
-        # Update meta.yaml for templated version
-        sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" $META_FILE
-        sed -i "s/sha256: .*/sha256: $HASH/" $META_FILE
-
-        # Display updated meta.yaml
-        cat $META_FILE
+        # Use Grayskull to update the recipe
+        $GRAYSKULL_CMD
 
         # Commit changes
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add $META_FILE
+        git add recipe/meta.yaml
         git status  # Check status
-        git commit -m "Update to version $NEW_VERSION" || echo "No changes to commit"
+        git commit -m "Update $PACKAGE_NAME to version $NEW_VERSION" || echo "No changes to commit"
 
     - name: Create Pull Request
       if: steps.check_version.outputs.new_version != ''
       uses: peter-evans/create-pull-request@v3
       with:
         branch: update-to-${{ steps.check_version.outputs.new_version }}
-        title: Update to ${{ steps.check_version.outputs.new_version }}
+        title: Update $PACKAGE_NAME to ${{ steps.check_version.outputs.new_version }}
         body: |
-          This PR updates the package to version ${{ steps.check_version.outputs.new_version }}.
+          This PR updates the $PACKAGE_NAME package to version ${{ steps.check_version.outputs.new_version }} using Grayskull.
+
+    - name: Auto Merge Pull Request
+      if: steps.check_version.outputs.new_version != ''
+      uses: pascalgn/automerge-action@v0.15.0
+      with:
+        merge_method: squash  # or 'merge', 'rebase' based on your preference
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
