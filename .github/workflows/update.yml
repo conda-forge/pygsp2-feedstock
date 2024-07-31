@@ -1,0 +1,69 @@
+name: Update Conda-Forge Package
+
+on:
+  schedule:
+    - cron: '0,30 * * * *'  # Runs every half hour
+  workflow_dispatch:
+
+jobs:
+  update-package:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout feedstock repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install Required Packages
+      run: |
+        pip install requests pyyaml gitpython jq
+
+    - name: Check for New Version on PyPI
+      id: check_version
+      run: |
+        PACKAGE_NAME="pygsp2"
+        PYPI_URL="https://pypi.org/pypi/$PACKAGE_NAME/json"
+        CURRENT_VERSION=$(grep -oP '(?<=version: ).*' recipe/meta.yaml)
+        LATEST_VERSION=$(curl -s $PYPI_URL | jq -r .info.version)
+        
+        if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+          echo "New version available: $LATEST_VERSION"
+          echo "::set-output name=new_version::$LATEST_VERSION"
+        else
+          echo "No new version found"
+          echo "::set-output name=new_version::"
+        fi
+
+    - name: Update meta.yaml
+      if: steps.check_version.outputs.new_version != ''
+      run: |
+        NEW_VERSION=${{ steps.check_version.outputs.new_version }}
+        PACKAGE_NAME="pygsp2"
+        META_FILE="recipe/meta.yaml"
+        
+        # Get new tarball URL and hash
+        URL="https://pypi.io/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$NEW_VERSION.tar.gz"
+        HASH=$(curl -sL $URL | sha256sum | awk '{print $1}')
+
+        # Update meta.yaml for templated version
+        sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" $META_FILE
+        sed -i "s/sha256: .*/sha256: $HASH/" $META_FILE
+        
+        # Commit changes
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add $META_FILE
+        git commit -m "Update to version $NEW_VERSION"
+
+    - name: Create Pull Request
+      if: steps.check_version.outputs.new_version != ''
+      uses: peter-evans/create-pull-request@v3
+      with:
+        branch: update-to-${{ steps.check_version.outputs.new_version }}
+        title: Update to ${{ steps.check_version.outputs.new_version }}
+        body: |
+          This PR updates the package to version ${{ steps.check_version.outputs.new_version }}.
