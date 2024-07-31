@@ -43,18 +43,17 @@ jobs:
     - name: Update Recipe Using Grayskull
       if: steps.check_version.outputs.new_version != ''
       run: |
-        NEW_VERSION=${{ steps.check_version.outputs.new_version }}
         PACKAGE_NAME=${{ steps.check_version.outputs.package_name }}
 
-        # Regenerate the entire recipe using Grayskull
-        grayskull pypi $PACKAGE_NAME --output-dir recipe
+        # Generate or update the recipe using Grayskull
+        grayskull pypi $PACKAGE_NAME
 
         # Commit changes
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add recipe/*
         git status  # Check status
-        git commit -m "Update $PACKAGE_NAME to version $NEW_VERSION" || echo "No changes to commit"
+        git commit -m "Update $PACKAGE_NAME recipe" || echo "No changes to commit"
 
     - name: Create Pull Request
       if: steps.check_version.outputs.new_version != ''
