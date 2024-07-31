@@ -2,7 +2,7 @@ name: Update Conda-Forge Recipe with Grayskull
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs every half hour
+    - cron: '0,30 * * * *'  # Runs every half hour
   workflow_dispatch:
 
 jobs:
@@ -43,10 +43,9 @@ jobs:
       run: |
         NEW_VERSION=${{ steps.check_version.outputs.new_version }}
         PACKAGE_NAME="pygsp2"
-        GRAYSKULL_CMD="grayskull create recipe $PACKAGE_NAME --version $NEW_VERSION --feedstock"
         
-        # Use Grayskull to update the recipe
-        $GRAYSKULL_CMD
+        # Update recipe using Grayskull
+        grayskull pypi $PACKAGE_NAME --version $NEW_VERSION
 
         # Commit changes
         git config user.name "github-actions[bot]"
