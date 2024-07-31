@@ -30,9 +30,6 @@ requirements:
     - unidecode
     - utm
     - pyxlsb
-    - charset-normalizer
-    - requests
-    - hatchling
 
 test:
   imports:
