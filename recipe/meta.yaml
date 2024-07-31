@@ -1,5 +1,5 @@
 {% set name = "pygsp2" %}
-{% set version = "2.0.6" %}
+{% set version = "2.0.9" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pygsp2-{{ version }}.tar.gz
-  sha256: be9de90a12cf164732fb53e10b8ca79a28924e7cf61f9b02216b168e16d55509
+  sha256: 88259daa69ac8d8de7909f677289c77bcc1e833a89101bacd445e754f06d4e1d
 
 build:
   noarch: python
