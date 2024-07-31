@@ -66,7 +66,9 @@ jobs:
         title: Update ${{ steps.check_version.outputs.package_name }} to ${{ steps.check_version.outputs.new_version }}
         body: |
           This PR updates the ${{ steps.check_version.outputs.package_name }} package to version ${{ steps.check_version.outputs.new_version }} using Grayskull.
-
+        labels: |
+          automerge
+        
     - name: Auto Merge Pull Request
       if: steps.check_version.outputs.new_version != ''
       uses: pascalgn/automerge-action@v0.15.0
