@@ -33,32 +33,26 @@ jobs:
         if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
           echo "New version available: $LATEST_VERSION"
           echo "::set-output name=new_version::$LATEST_VERSION"
+          echo "::set-output name=package_name::$PACKAGE_NAME"
         else
           echo "No new version found"
           echo "::set-output name=new_version::"
+          echo "::set-output name=package_name::"
         fi
 
-    - name: Update meta.yaml using Grayskull
+    - name: Update Recipe Using Grayskull
       if: steps.check_version.outputs.new_version != ''
       run: |
         NEW_VERSION=${{ steps.check_version.outputs.new_version }}
-        PACKAGE_NAME="pygsp2"
-        
-        # Update the meta.yaml file with Grayskull
-        grayskull pypi $PACKAGE_NAME
+        PACKAGE_NAME=${{ steps.check_version.outputs.package_name }}
 
-        # Update the version in the recipe manually
-        sed -i "s/{% set version = \".*\" %}/{% set version = \"$NEW_VERSION\" %}/" recipe/meta.yaml
-
-        # Get new tarball URL and hash
-        URL="https://pypi.io/packages/source/${PACKAGE_NAME:0:1}/$PACKAGE_NAME/$PACKAGE_NAME-$NEW_VERSION.tar.gz"
-        HASH=$(curl -sL $URL | sha256sum | awk '{print $1}')
-        sed -i "s/sha256: .*/sha256: $HASH/" recipe/meta.yaml
+        # Regenerate the entire recipe using Grayskull
+        grayskull pypi $PACKAGE_NAME --output-dir recipe
 
         # Commit changes
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add recipe/meta.yaml
+        git add recipe/*
         git status  # Check status
         git commit -m "Update $PACKAGE_NAME to version $NEW_VERSION" || echo "No changes to commit"
 
@@ -67,9 +61,9 @@ jobs:
       uses: peter-evans/create-pull-request@v3
       with:
         branch: update-to-${{ steps.check_version.outputs.new_version }}
-        title: Update $PACKAGE_NAME to ${{ steps.check_version.outputs.new_version }}
+        title: Update ${{ steps.check_version.outputs.package_name }} to ${{ steps.check_version.outputs.new_version }}
         body: |
-          This PR updates the $PACKAGE_NAME package to version ${{ steps.check_version.outputs.new_version }} using Grayskull.
+          This PR updates the ${{ steps.check_version.outputs.package_name }} package to version ${{ steps.check_version.outputs.new_version }} using Grayskull.
 
     - name: Auto Merge Pull Request
       if: steps.check_version.outputs.new_version != ''
