@@ -77,11 +77,23 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Delete Branch After Merge
+    - name: Check if Branch Exists
+      id: check_branch
       if: steps.check_version.outputs.new_version != ''
+      run: |
+        BRANCH_NAME=update-to-${{ steps.check_version.outputs.new_version }}
+        if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
+          echo "Branch exists: $BRANCH_NAME"
+          echo "::set-output name=branch_exists::true"
+        else
+          echo "Branch does not exist: $BRANCH_NAME"
+          echo "::set-output name=branch_exists::false"
+        fi
+
+    - name: Delete Branch After Merge
+      if: steps.check_branch.outputs.branch_exists == 'true'
       uses: peter-evans/delete-branch-action@v2
       with:
         branch: update-to-${{ steps.check_version.outputs.new_version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
