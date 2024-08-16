@@ -7,7 +7,7 @@ Home: https://github.com/gsp-eeg/pygsp2
 
 Package license: BSD-3-Clause
 
-Summary: Graph Signal Processing in Python
+Summary: Package for EEG Graph signal Processing
 
 Current build status
 ====================
